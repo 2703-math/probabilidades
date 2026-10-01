@@ -234,14 +234,34 @@ def fig_venn_cond(a, b, ab):
     fig = go.Figure()
     theta = np.linspace(0, 2*np.pi, 200)
     cx_a, cx_b = -1.0, 1.0
-    for cx, label, cor in [(cx_a,"A","rgba(59,130,246,.35)"),
-                            (cx_b,"B","rgba(16,185,129,.35)")]:
-        fig.add_trace(go.Scatter(x=cx+1.5*np.cos(theta), y=1.5*np.sin(theta),
-            fill="toself", fillcolor=cor, line=dict(color=cor.replace(".35","1").replace("rgba","rgb").split(",")[0]+")"),
-            mode="lines", hoverinfo="skip", showlegend=False))
-        fig.add_trace(go.Scatter(x=[cx*1.8], y=[0], mode="text",
-            text=[label], textfont=dict(size=22, color="#0f172a"),
-            hoverinfo="skip", showlegend=False))
+    
+    # Cores explicitamente especificadas sem reformatar string de forma frágil
+    esquema_cores = [
+        (cx_a, "A", "rgba(59, 130, 246, 0.35)", "#3b82f6"),
+        (cx_b, "B", "rgba(16, 185, 129, 0.35)", "#10b981")
+    ]
+    
+    for cx, label, cor_fill, cor_line in esquema_cores:
+        fig.add_trace(go.Scatter(
+            x=cx + 1.5 * np.cos(theta),
+            y=1.5 * np.sin(theta),
+            fill="toself",
+            fillcolor=cor_fill,
+            line=dict(color=cor_line, width=2),
+            mode="lines",
+            hoverinfo="skip",
+            showlegend=False
+        ))
+        fig.add_trace(go.Scatter(
+            x=[cx * 1.8],
+            y=[0],
+            mode="text",
+            text=[label],
+            textfont=dict(size=22, color="#0f172a"),
+            hoverinfo="skip",
+            showlegend=False
+        ))
+        
     for x, y, txt in [(cx_a-.6, 0, f"só A\n{a-ab}%"),
                        (0, 0, f"A∩B\n{ab}%"),
                        (cx_b+.6, 0, f"só B\n{b-ab}%"),
@@ -249,6 +269,7 @@ def fig_venn_cond(a, b, ab):
         fig.add_trace(go.Scatter(x=[x], y=[y], mode="text",
             text=[txt], textfont=dict(size=13, color="#0f172a"),
             hoverinfo="skip", showlegend=False))
+            
     fig.update_layout(showlegend=False, plot_bgcolor="white", paper_bgcolor="white",
         xaxis=dict(visible=False, range=[-4,4]),
         yaxis=dict(visible=False, range=[-3,3], scaleanchor="x", scaleratio=1),
