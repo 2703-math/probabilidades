@@ -1,9 +1,26 @@
+"""
 🎲 Probabilidade Visual — Do clássico à Teoria dos Jogos
 =========================================================
+Executar com:   streamlit run probabilidades.py
 
-import math, random, itertools
+Sete módulos didáticos:
+  1. Fundamentos     – espaço amostral, tipos de evento, Lei dos Grandes Números
+  2. Árvore          – experimentos compostos animados
+  3. Eventos Suces.  – produto de probabilidades, caminho na árvore
+  4. Complementar    – P(A') = 1 – P(A), paradoxo do aniversário
+  5. Condicional     – P(A|B), Bayes, tabela de contingência interativa
+  6. União           – P(A∪B), diagrama de Venn animado
+  7. Teoria dos      – Dilema do Prisioneiro, Pedra-Papel-Tesoura, Equilíbrio de Nash
+     Jogos
+
+Roteiro: Prever → Observar → Explicar (caixas "Teste sua intuição")
+"""
+import math
+import random
+import itertools
 from fractions import Fraction
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
@@ -57,7 +74,6 @@ def fig_fundamentos(lados, n_sim, seed):
     rolls = rng.integers(1, lados + 1, size=n_sim)
     p_teo = 1 / lados
 
-    # frequências acumuladas para cada face
     fig = make_subplots(1, 2,
         subplot_titles=("Frequência relativa acumulada (Lei dos Grandes Números)",
                         f"Histograma de {n_sim:,} lançamentos".replace(",", ".")),
@@ -117,10 +133,6 @@ def fig_espaco_amostral(lados):
 # ABA 2 — ÁRVORE DE PROBABILIDADES
 # ────────────────────────────────────────────
 def construir_arvore(etapas):
-    """
-    etapas: list de list de (label, prob)
-    Retorna nós e arestas para plotar.
-    """
     nodes = [{"id": "R", "label": "Início", "prob": 1.0, "nivel": 0, "pos_y": 0.5}]
     edges = []
     nivel_nos = {"R": nodes[0]}
@@ -144,9 +156,7 @@ def construir_arvore(etapas):
                 nos_novos.append(nid)
             grupos.append(filhos)
 
-        # distribuir y
         total = sum(len(g) for g in grupos)
-        idx = 0
         for g in grupos:
             pai_y = nivel_nos[g[0]["pai"]]["pos_y"] if g else 0.5
             n = len(g)
@@ -159,7 +169,6 @@ def construir_arvore(etapas):
                 edges.append((no["pai"], no["id"], no["prob_ramo"]))
         nos_atuais = nos_novos
 
-    # pos_x uniforme por nível
     n_niveis = len(etapas) + 1
     for no in nodes:
         no["pos_x"] = no["nivel"] / max(n_niveis - 1, 1)
@@ -168,7 +177,6 @@ def construir_arvore(etapas):
 
 def fig_arvore(nodes, edges, destacar=None):
     fig = go.Figure()
-    # arestas
     for pai_id, filho_id, p_ramo in edges:
         pai  = next(n for n in nodes if n["id"] == pai_id)
         filho = next(n for n in nodes if n["id"] == filho_id)
@@ -184,7 +192,6 @@ def fig_arvore(nodes, edges, destacar=None):
             text=[f"p={frac_str(round(p_ramo*100), 100) if p_ramo not in (0.5,1/3,1/4,1/6,2/3,3/4) else str(Fraction(p_ramo).limit_denominator(20))}"],
             textfont=dict(size=11, color=cor), hoverinfo="skip", showlegend=False))
 
-    # nós
     xs = [n["pos_x"] for n in nodes]
     ys = [n["pos_y"] for n in nodes]
     txts = [f"{n['label']}<br>{n['prob']:.3f}" if n["id"] != "R" else "Início" for n in nodes]
@@ -206,7 +213,6 @@ def fig_arvore(nodes, edges, destacar=None):
 # ABA 5 — CONDICIONAL e BAYES
 # ────────────────────────────────────────────
 def fig_contingencia(a, b, ab):
-    """Diagrama de barras empilhadas e tabela."""
     nao_ab = a - ab
     b_nao_a = b - ab
     nem = 100 - a - b + ab
@@ -225,7 +231,6 @@ def fig_contingencia(a, b, ab):
     return fig
 
 def fig_venn_cond(a, b, ab):
-    """Venn simples com A e B."""
     fig = go.Figure()
     theta = np.linspace(0, 2*np.pi, 200)
     cx_a, cx_b = -1.0, 1.0
@@ -255,7 +260,6 @@ def fig_venn_cond(a, b, ab):
 # ────────────────────────────────────────────
 def fig_uniao_animado(pa, pb, pab):
     theta = np.linspace(0, 2*np.pi, 200)
-    # sobreposição proporcional a pab
     dist = 2.5 * (1 - pab / max(pa, pb, 0.01))
     dist = max(0.1, min(dist, 3.0))
     cx_a, cx_b = -dist/2, dist/2
@@ -278,7 +282,6 @@ def fig_uniao_animado(pa, pb, pab):
         frames.append(go.Frame(data=data, name=str(round(alpha,2))))
 
     fig = go.Figure(data=frames[0].data, frames=frames)
-    # rótulos estáticos
     puniao = pa + pb - pab
     for x, y, txt, sz in [
         (cx_a-.5, 0, f"A\n{pa*100:.0f}%", 16),
@@ -306,7 +309,6 @@ def fig_uniao_animado(pa, pb, pab):
 # ABA 7 — TEORIA DOS JOGOS
 # ────────────────────────────────────────────
 PAYOFF_PRISIONEIRO = {
-    # (escolha_A, escolha_B): (ganho_A, ganho_B)   — anos de cadeia como custo
     ("Cooperar","Cooperar"):   (-1,-1),
     ("Cooperar","Trair"):      (-5, 0),
     ("Trair",   "Cooperar"):   ( 0,-5),
@@ -347,7 +349,6 @@ def fig_matriz_jogo(payoff, jogadores=("Jogador A","Jogador B"), destaque=None):
     return fig
 
 def simular_iterado(n_rodadas, est_A, est_B, seed=42):
-    """Dilema do Prisioneiro iterado com estratégias simples."""
     rng = random.Random(seed)
     hist_A, hist_B, pts_A, pts_B = [], [], 0, 0
     ult_A, ult_B = "Cooperar", "Cooperar"
@@ -401,14 +402,12 @@ def fig_iterado(hist_A, hist_B, pts_A, pts_B, est_A, est_B):
     return fig
 
 def fig_nash_ppt():
-    """Heatmap das utilidades esperadas em estratégias mistas (PPT)."""
-    ps = np.linspace(0,1,50)   # prob de jogar "Pedra" para A
-    qs = np.linspace(0,1,50)   # prob de jogar "Pedra" para B
-    # Estratégia mista: (p,q,1-p-q) e (r,s,1-r-s) com resto dividido entre papel e tesoura
+    ps = np.linspace(0,1,50)
+    qs = np.linspace(0,1,50)
     U = np.zeros((50,50))
     for i,p in enumerate(ps):
         for j,q in enumerate(qs):
-            pA = np.array([p, (1-p)/2, (1-p)/2])  # Pedra, Papel, Tesoura para A
+            pA = np.array([p, (1-p)/2, (1-p)/2])
             pB = np.array([q, (1-q)/2, (1-q)/2])
             M = np.array([[PAYOFF_PPT[(a,b)][0] for b in ["Pedra","Papel","Tesoura"]]
                            for a in ["Pedra","Papel","Tesoura"]])
@@ -503,7 +502,7 @@ with tabs[0]:
          "Se um dado é lançado 6 vezes e sai 1 todas as vezes, a próxima jogada tem P(1) = ?",
          ["Maior que 1/6 (o dado está 'quente')",
           "1/6 — cada lançamento é independente",
-          "Menor que 1/6 (está 'na hora' de outra face sair"], 1,
+          "Menor que 1/6 (está 'na hora' de outra face sair)"], 1,
          "Dado honesto: cada lançamento é independente. O dado não tem memória.")
 
 # ══════════════════════════════════════════════════════════════
@@ -543,12 +542,12 @@ with tabs[1]:
             desc = "Cada extração tem as mesmas probabilidades (bola devolvida)"
         elif cenario == "Urna: 3 azuis, 2 vermelhas (sem reposição)":
             etapas = [[("Azul",3/5),("Verm",2/5)],
-                      [("Azul",2/4),("Verm",2/4)]]   # simplificação: 1 nível, pais iguais
+                      [("Azul",2/4),("Verm",2/4)]]
             desc = "Sem reposição: após tirar uma azul, restam 2 azuis e 2 vermelhas de 4"
         elif cenario == "Dado par/ímpar → moeda":
             etapas = [[("Par",0.5),("Ímpar",0.5)],[("K",0.5),("C",0.5)]]
             desc = "Primeiro: dado (par ou ímpar). Depois: moeda."
-        else:  # Personalizado
+        else:
             st.markdown("**Etapa 1**")
             n1 = st.slider("Nº de ramos na etapa 1", 2, 4, 2, key="n1_p")
             ramos1 = []
@@ -574,9 +573,6 @@ with tabs[1]:
 
     with ct2:
         nodes, edges = construir_arvore(etapas)
-        folhas = [n for n in nodes if not any(e[0]==n["id"] for e in edges if e[0] != n["id"] or True)
-                  and n["id"] != "R" and n["nivel"] == len(etapas)]
-        # — selecionar caminho para destacar
         st.markdown("#### 🌳 Árvore completa")
         mostrar(fig_arvore(nodes, edges), 380)
 
@@ -587,7 +583,6 @@ with tabs[1]:
             sel = st.selectbox("Selecione um resultado final:", opcoes, key="sel_folha")
             idx_sel = opcoes.index(sel)
             folha_id = folhas_reais[idx_sel]["id"]
-            # rastrear caminho
             caminho = set()
             nid = folha_id
             caminho.add(nid)
@@ -615,7 +610,7 @@ with tabs[2]:
         (sem reposição, por exemplo).
     </div>""", unsafe_allow_html=True)
     if avancado:
-        st.markdown('<div class="formula">P(A₁ ∩ A₂ ∩ … ∩ Aₙ) = P(A₁) · P(A₂) · … · P(Aₙ)  &nbsp; (independentes)</div>',
+        st.markdown('<div class="formula">P(A₁ ∩ A₂ ∩ … ∩ Aₙ) = P(A₁) · P(A₂) · … · P(Aₙ)    (independentes)</div>',
                     unsafe_allow_html=True)
 
     with st.expander("💡 Analogia: senha de cofre"):
@@ -630,7 +625,6 @@ with tabs[2]:
             if tipo_ev == "Moeda":
                 n_ev = st.slider("Quantos lançamentos?", 1, 10, 3, key="nev_moeda")
                 p_unit = 0.5
-                label_ev = "Cara"
                 eventos = [("Cara", 0.5)] * n_ev
                 prob_seq = 0.5 ** n_ev
                 desc_ev = f"P(tudo cara em {n_ev} lançamentos)"
@@ -659,7 +653,7 @@ with tabs[2]:
                         az_rest = max(az_rest - 1, 0)
                         tot_rest -= 1
                 desc_ev = f"P({n_ev} azuis consecutivas)"
-            else:  # Senha
+            else:
                 n_dig = st.slider("Dígitos da senha", 1, 8, 4, key="ndig_ev")
                 base = st.slider("Base (0 a N-1)", 2, 16, 10, key="base_ev")
                 n_ev = n_dig
@@ -669,7 +663,6 @@ with tabs[2]:
                 desc_ev = f"P(acertar todos os {n_dig} dígitos)"
 
     with ce2:
-        # visualizar como caminho na árvore (limitado a 4 etapas por legibilidade)
         etapas_suc = [[ev] for ev in eventos[:4]]
         if len(etapas_suc) > 0:
             nodes_s, edges_s = construir_arvore(etapas_suc)
@@ -684,7 +677,6 @@ with tabs[2]:
             st.markdown("#### Caminho da sequência desejada (até 4 etapas)")
             mostrar(fig_arvore(nodes_s, edges_s, destacar=caminho_d), 320)
 
-        # tabela de cálculo
         st.markdown("#### 📐 Cálculo passo a passo")
         passos = []
         prod = 1.0
@@ -692,7 +684,6 @@ with tabs[2]:
             prod *= p
             passos.append({"Etapa": k+1, "Evento": lbl, "P individual": f"{p:.6f}",
                            "Produto acumulado": f"{prod:.8f}"})
-        import pandas as pd
         st.dataframe(pd.DataFrame(passos), use_container_width=True, hide_index=True)
         st.info(f"**{desc_ev} = {prob_seq:.8f}** = {prob_seq*100:.4f}%  "
                 f"→ em média 1 vez a cada **{1/prob_seq:,.0f}** tentativas".replace(",","."))
@@ -731,7 +722,6 @@ with tabs[3]:
             st.markdown("**Paradoxo do Aniversário**")
             st.markdown("Qual é a probabilidade de que **ao menos duas pessoas** numa sala tenham o mesmo aniversário?")
             n_pessoas = st.slider("Pessoas na sala", 2, 70, 23, key="np_aniv")
-            # P(todos diferentes) = 365/365 · 364/365 · … · (365-n+1)/365
             p_todos_dif = 1.0
             for k in range(n_pessoas):
                 p_todos_dif *= (365 - k) / 365
@@ -750,7 +740,6 @@ with tabs[3]:
             st.caption(f"Pela estratégia do complementar: 1 − P(A nunca ocorre) = 1 − {1-p_a:.2f}^{n_tent} = {p_ao_menos:.4f}")
 
     with cc2:
-        # Curva paradoxo do aniversário
         ns = list(range(2, 71))
         probs = []
         p = 1.0
@@ -777,7 +766,6 @@ with tabs[3]:
             plot_bgcolor="white", paper_bgcolor="white", margin=dict(l=10,r=10,t=60,b=10))
         mostrar(fig_aniv, 340)
 
-        # Pie A vs A'
         fig_pie = go.Figure(go.Pie(labels=["P(A)","P(A')"],
             values=[p_a, 1-p_a],
             marker=dict(colors=["#3b82f6","#e2e8f0"]),
@@ -853,7 +841,6 @@ with tabs[4]:
             mostrar(fig_venn_cond(pa_c, pb_c, pab_c), 280)
             mostrar(fig_contingencia(pa_c, pb_c, pab_c), 260)
 
-        # Curva valor preditivo positivo vs prevalência
         prevs = np.linspace(0.01, 0.5, 100)
         vpp = sens * prevs / (sens*prevs + (1-espec)*(1-prevs))
         fig_vpp = go.Figure()
@@ -916,7 +903,6 @@ with tabs[5]:
                 if pab_u == 0:
                     st.info("Mutuamente exclusivos: A e B não podem ocorrer juntos.")
 
-        # Tabela de aditividade
         st.markdown("**Decomposição:**")
         st.dataframe({
             "Região": ["Só A","Só B","A∩B","Nenhum"],
@@ -926,7 +912,6 @@ with tabs[5]:
     with cu2:
         mostrar(fig_uniao_animado(pa_u, pb_u, pab_u), 340)
 
-        # Princípio da inclusão-exclusão para 3 eventos (ilustrativo)
         st.markdown("#### 🔢 Generalização: 3 eventos")
         st.latex(r"P(A\cup B\cup C) = P(A)+P(B)+P(C)-P(A\cap B)-P(A\cap C)-P(B\cap C)+P(A\cap B\cap C)")
         pc_u = st.slider("P(C)", 0.05, 0.80, 0.30, 0.05, key="pc_u")
