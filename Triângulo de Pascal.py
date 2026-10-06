@@ -3,12 +3,13 @@
 ===================================================
 Executar com: streamlit run pascal_binomial.py
 
-Cinco módulos didáticos interativos:
-  1. O Triângulo de Pascal – construção $n \times k$ e Relação de Stifel
+Seis módulos didáticos interativos:
+  1. O Triângulo de Pascal – construção n x k e Relação de Stifel
   2. Padrões Visuais – Sierpinski (pares/ímpares), Soma das linhas e Teorema do Hóquei
   3. Binômio de Newton – expansão algébrica de (ax + b)ⁿ e triângulo de coeficientes
   4. Termo Geral – busca por termo independente, termo em xᵖ e termo central
   5. Conexão com Probabilidade – ensaios de Bernoulli e Distribuição Binomial
+  6. Aplicação na Genética – 1ª e 2ª Leis de Mendel e Herança Quantitativa (Poligenia)
 """
 
 import math
@@ -81,7 +82,8 @@ with st.sidebar:
         "**2. Padrões:** Ative a paridade para ver o Fractal de Sierpinski.\n\n"
         "**3. Binômio:** Conecte os coeficientes binomiais à expansão de $(a+b)^n$.\n\n"
         "**4. Termo Geral:** Calcule termos específicos sem expandir tudo.\n\n"
-        "**5. Probabilidade:** Veja como o triângulo distribui as chances de moedas."
+        "**5. Probabilidade:** Veja como o triângulo distribui as chances de moedas.\n\n"
+        "**6. Genética:** Aplique o binômio em Mendel e na Herança Quantitativa."
     )
     st.markdown("---")
     st.caption("Desenvolvido para Ensino Médio e Pré-Vestibular")
@@ -90,14 +92,15 @@ with st.sidebar:
 # TÍTULO
 # ────────────────────────────────────────────────────────────
 st.markdown('<div class="main-title">🔺 Triângulo de Pascal & Binômio de Newton</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Propriedades combinatórias, expansões algébricas e padrões fractais em tempo real</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Propriedades combinatórias, expansões algébricas, fractais e genético-estatística</div>', unsafe_allow_html=True)
 
 tabs = st.tabs([
     "1. O Triângulo de Pascal",
     "2. Padrões & Curiosidades",
     "3. Binômio de Newton",
     "4. Termo Geral",
-    "5. Conexão com Probabilidade"
+    "5. Conexão com Probabilidade",
+    "6. Aplicação na Genética"
 ])
 
 # ══════════════════════════════════════════════════════════════
@@ -106,7 +109,7 @@ tabs = st.tabs([
 with tabs[0]:
     st.markdown("""<div class="card">
     O <b>Triângulo de Pascal</b> é uma tabela triangular infinita de números onde o elemento na linha <i>n</i>
-    e coluna <i>k</i> representa a combinação <b>C(n, k) =  binom(n, k)</b>.<br>
+    e coluna <i>k</i> representa a combinação <b>C(n, k) = binom(n, k)</b>.<br>
     <b>Relação de Stifel:</b> Todo elemento interno é igual à soma do elemento diretamente acima com o elemento imediatamente à esquerda dele na linha anterior.
     </div>""", unsafe_allow_html=True)
 
@@ -114,7 +117,7 @@ with tabs[0]:
     with c1:
         with st.container(border=True):
             n_linhas = st.slider("Número de linhas (n)", 3, 12, 7, key="n_pascal")
-            modo_exib = st.radio("Modo de exibição das células", ["Valores C(n,k)", "Notação Binomial  binom(n,k)"], key="modo_pascal")
+            modo_exib = st.radio("Modo de exibição das células", ["Valores C(n,k)", "Notação Binomial binom(n,k)"], key="modo_pascal")
             destacar_stifel = st.checkbox("Destacar Relação de Stifel", value=True, key="stifel_chk")
 
             if destacar_stifel and n_linhas >= 2:
@@ -130,12 +133,10 @@ with tabs[0]:
             st.markdown('</div>', unsafe_allow_html=True)
 
     with c2:
-        # Construção da malha gráfica para o Triângulo
         xs, ys, textos, cores, hover_txt = [], [], [], [], []
 
         for i in range(n_linhas + 1):
             for j in range(i + 1):
-                # Posição piramidal: x offset por linha
                 x_pos = j - i / 2.0
                 y_pos = -i
                 val = nCr(i, j)
@@ -148,14 +149,13 @@ with tabs[0]:
                 else:
                     textos.append(f"({i}<br>{j})")
 
-                # Definição das cores para destaque de Stifel
                 if destacar_stifel and n_linhas >= 2:
                     if i == stifel_n and j == stifel_k:
-                        cores.append("#ef4444")  # Resultado (Vermelho)
+                        cores.append("#ef4444")
                     elif i == stifel_n - 1 and j == stifel_k - 1:
-                        cores.append("#3b82f6")  # Parcela 1 (Azul)
+                        cores.append("#3b82f6")
                     elif i == stifel_n - 1 and j == stifel_k:
-                        cores.append("#10b981")  # Parcela 2 (Verde)
+                        cores.append("#10b981")
                     else:
                         cores.append("#f1f5f9")
                 else:
@@ -165,7 +165,6 @@ with tabs[0]:
 
         fig_pascal = go.Figure()
 
-        # Adicionar conexões/linhas se Stifel estiver ativo
         if destacar_stifel and n_linhas >= 2:
             x_dest = stifel_k - stifel_n / 2.0
             y_dest = -stifel_n
@@ -292,11 +291,10 @@ with tabs[1]:
                     ys_h.append(y_pos)
                     txt_h.append(str(val))
 
-                    # Lógica de destaque do taco de hóquei
                     if diag_k <= j <= diag_k and r_start <= i <= r_end:
-                        colors_h.append("#3b82f6")  # Haste (Azul)
+                        colors_h.append("#3b82f6")
                     elif i == res_r and j == res_k:
-                        colors_h.append("#ef4444")  # Cabo/Curva do taco (Vermelho)
+                        colors_h.append("#ef4444")
                     else:
                         colors_h.append("#f1f5f9")
 
@@ -311,7 +309,7 @@ with tabs[1]:
             fig_hoquei.update_layout(title="Teorema do Hóquei (Células Azuis somam a Célula Vermelha)")
             mostrar(fig_hoquei, 420)
 
-    else: # Fibonacci
+    else:
         st.markdown("**Diagonais Rasas e Fibonacci:** Somando os elementos ao longo das diagonais rasas do Triângulo de Pascal, obtemos a Sequência de Fibonacci (1, 1, 2, 3, 5, 8, 13...).")
         n_fib = st.slider("Termos de Fibonacci para gerar", 4, 10, 6, key="n_fib")
         fibs = []
@@ -356,7 +354,6 @@ with tabs[2]:
             st.markdown('</div>', unsafe_allow_html=True)
 
     with c2:
-        # Gerar os termos expandidos
         termos_str = []
         valores_termos = []
         labels_termos = []
@@ -369,7 +366,6 @@ with tabs[2]:
             pow_a = exp_n - k
             pow_b = k
 
-            # Formatação limpa em LaTeX do termo
             t_str = f"{val_coef}" if val_coef != 1 or (pow_a == 0 and pow_b == 0) else ""
             if pow_a > 0:
                 t_str += "x" if pow_a == 1 else f"x^{{{pow_a}}}"
@@ -384,7 +380,6 @@ with tabs[2]:
         expansao_latex = expansao_latex.replace("+ -", "- ")
         st.latex(expansao_latex)
 
-        # Gráfico dos coeficientes do Binômio
         fig_bin = go.Figure(go.Bar(
             x=labels_termos, y=valores_termos,
             text=[f"{v}" for v in valores_termos], textposition="outside",
@@ -407,7 +402,7 @@ with tabs[2]:
 with tabs[3]:
     st.markdown("""<div class="card">
     O <b>Termo Geral</b> permite encontrar qualquer termo específico do desenvolvimento sem precisar expandir todo o binômio:<br>
-    <b>T_{k+1} =  binom(n, k) · (A)^n-k · (B)^k</b>
+    <b>T_{k+1} = binom(n, k) · (A)^n-k · (B)^k</b>
     </div>""", unsafe_allow_html=True)
 
     c1, c2 = st.columns([1, 2.2])
@@ -428,11 +423,6 @@ with tabs[3]:
             st.markdown('</div>', unsafe_allow_html=True)
 
     with c2:
-        # Cálculo do termo geral genérico
-        # T_{k+1} = C(n,k) * (c1 x^{p1})^{n-k} * (c2 x^{p2})^k
-        # Coeficiente numerico = C(n,k) * c1^{n-k} * c2^k
-        # Expoente final de x = p1*(n-k) + p2*k
-
         passos = []
         for k in range(n_tg + 1):
             cnk = nCr(n_tg, k)
@@ -451,14 +441,12 @@ with tabs[3]:
         st.markdown("#### Análise de todos os termos do Binômio:")
         st.dataframe(df_tg, use_container_width=True, hide_index=True)
 
-        # Destaque do termo selecionado
         sel_row = df_tg.iloc[k_sel]
         st.success(
-            f"🎯 **Termo T_{k_sel+1} (k={k_sel}):**  \n"
+            f"🎯 **Termo T_{k_sel+1} (k={k_sel}):** \n"
             f"Valor = **{sel_row['Coeficiente']} · x^{{{sel_row['Expoente de x']}}}**"
         )
 
-        # Busca automática por Termo Independente e Termo Central
         indep_row = df_tg[df_tg["Expoente de x"] == 0]
         if not indep_row.empty:
             st.info(f"💡 **Termo Independente de x encontrado:** {indep_row.iloc[0]['Posição']} com valor **{indep_row.iloc[0]['Coeficiente']}**")
@@ -474,9 +462,9 @@ with tabs[3]:
 # ══════════════════════════════════════════════════════════════
 with tabs[4]:
     st.markdown("""<div class="card">
-    A **Distribuição Binomial** modela experimentos com <i>n</i> ensaios independentes de Bernoulli (sucesso/fracasso).<br>
+    A <b>Distribuição Binomial</b> modela experimentos com <i>n</i> ensaios independentes de Bernoulli (sucesso/fracasso).<br>
     A probabilidade de obter exatamente <i>k</i> sucessos é: 
-    <b>P(X = k) =  binom(n, k) · pᵏ · (1 - p)ⁿ⁻ᵏ</b>.<br>
+    <b>P(X = k) = binom(n, k) · pᵏ · (1 - p)ⁿ⁻ᵏ</b>.<br>
     O Triângulo de Pascal fornece diretamente o número de maneiras favoráveis de combinar os sucessos!
     </div>""", unsafe_allow_html=True)
 
@@ -519,8 +507,136 @@ with tabs[4]:
          ["25%", "37,5%", "50%", "12,5%"], 1,
          "P(X=2) = C(4,2) · (0,5)² · (0,5)² = 6 · (1/16) = 6/16 = 37,5%.")
 
+# ══════════════════════════════════════════════════════════════
+# ABA 6 — APLICAÇÃO NA GENÉTICA (MENDEL & POLIGENIA)
+# ══════════════════════════════════════════════════════════════
+with tabs[5]:
+    st.markdown("""<div class="card">
+    <b>A Genética de Mendel e o Triângulo de Pascal:</b><br>
+    A distribuição dos genótipos e fenótipos na genética segue rigorosamente as leis binomiais!<br>
+    • <b>1ª Lei de Mendel:</b> O cruzamento Aa x Aa produz a proporção genotípica 1 AA : 2 Aa : 1 aa (linha 2 de Pascal).<br>
+    • <b>Cálculo de Proles:</b> A probabilidade de um casal ter k filhos com determinado fenótipo em N nascimentos é dada pela expansão binomial (p + q)ⁿ.<br>
+    • <b>2ª Lei de Mendel:</b> A combinação de dois genes independentes (3+1)² = 9 : 3 : 3 : 1 é o quadrado do binômio fenotípico.<br>
+    • <b>Herança Quantitativa (Poligenia):</b> A frequência dos fenótipos para N pares de alelos segue a linha 2N de Pascal, formando a curva normal em sino.
+    </div>""", unsafe_allow_html=True)
+
+    modo_genetica = st.radio("Selecione o conceito genético:", [
+        "1. Probabilidade na Família (1ª Lei em Proles)",
+        "2. Dihibridismo (2ª Lei de Mendel)",
+        "3. Herança Quantitativa / Poligenia"
+    ], key="gen_modo")
+
+    if modo_genetica.startswith("1."):
+        st.markdown("### 🧬 Probabilidade de Fenótipos em uma Família")
+        st.caption("Exemplo: Casal heterozigoto (Aa x Aa) para um caráter autossômico recessivo (ex: Albinismo).")
+
+        cg1, cg2 = st.columns([1, 2.3])
+        with cg1:
+            with st.container(border=True):
+                n_filhos = st.slider("Número de filhos do casal (N)", 1, 10, 4, key="gen_n")
+                p_fenotipo = st.radio("Fenótipo desejado:", [
+                    "Dominante (Normal) - P = 3/4",
+                    "Recessivo (Afetado) - P = 1/4"
+                ], key="gen_p_type")
+
+                p_val = 0.75 if "Dominante" in p_fenotipo else 0.25
+                q_val = 1 - p_val
+
+                k_filhos = st.slider("Quantidade exata de filhos com esse fenótipo (k)", 0, n_filhos, min(3 if p_val == 0.75 else 1, n_filhos), key="gen_k")
+
+            p_exata = nCr(n_filhos, k_filhos) * (p_val**k_filhos) * (q_val**(n_filhos - k_filhos))
+            st.metric(f"P(exatamente {k_filhos} filhos)", f"{p_exata*100:.2f}%")
+
+            if mostrar_formulas:
+                st.markdown('<div class="form">', unsafe_allow_html=True)
+                formula(r"P(X = k) = \binom{N}{k} \left(\frac{3}{4}\right)^k \left(\frac{1}{4}\right)^{N-k}")
+                st.markdown('</div>', unsafe_allow_html=True)
+
+        with cg2:
+            ks = list(range(n_filhos + 1))
+            probs = [nCr(n_filhos, k) * (p_val**k) * (q_val**(n_filhos - k)) for k in ks]
+            cores_g = ["#ef4444" if k == k_filhos else "#3b82f6" for k in ks]
+
+            lbl_fen = "Dominante(s)" if p_val == 0.75 else "Recessivo(s)"
+
+            fig_gen1 = go.Figure(go.Bar(
+                x=[f"{k} {lbl_fen}" for k in ks],
+                y=[p * 100 for p in probs],
+                text=[f"{p*100:.1f}%<br>(Termo C={nCr(n_filhos, k)})" for p, k in zip(probs, ks)],
+                textposition="outside", marker_color=cores_g
+            ))
+            fig_gen1.update_layout(
+                title=f"Distribuição Binomial para Família de {n_filhos} Filhos",
+                xaxis_title="Número de filhos com a característica",
+                yaxis_title="Probabilidade (%)"
+            )
+            mostrar(fig_gen1, 380)
+
+    elif modo_genetica.startswith("2."):
+        st.markdown("### 🧬 2ª Lei de Mendel (Dihibridismo)")
+        st.markdown("""
+        No cruzamento $AaBb \\times AaBb$, a segregação de cada par de alelos é independente ($3:1$).
+        A combinação dos dois pares equivale ao quadrado do binômio fenotípico:
+
+        $$(3 \\text{ Dominante} + 1 \\text{ Recessivo})^2 = 9 \\text{ A_B_} + 3 \\text{ A_bb} + 3 \\text{ aaB_} + 1 \\text{ aabb}$$
+        """)
+
+        df_mendel2 = pd.DataFrame({
+            "Fenótipo": ["Dominante / Dominante (A_B_)", "Dominante / Recessivo (A_bb)", "Recessivo / Dominante (aaB_)", "Recessivo / Recessivo (aabb)"],
+            "Proporção": ["9/16 (56,25%)", "3/16 (18,75%)", "3/16 (18,75%)", "1/16 (6,25%)"],
+            "Origem Binomial": ["(3/4) × (3/4) = 9/16", "(3/4) × (1/4) = 3/16", "(1/4) × (3/4) = 3/16", "(1/4) × (1/4) = 1/16"]
+        })
+        st.table(df_mendel2)
+
+        fig_m2 = go.Figure(go.Pie(
+            labels=["A_B_ (9)", "A_bb (3)", "aaB_ (3)", "aabb (1)"],
+            values=[9, 3, 3, 1],
+            marker=dict(colors=["#3b82f6", "#10b981", "#f59e0b", "#ef4444"]),
+            textinfo="label+percent"
+        ))
+        fig_m2.update_layout(title="Proporção Fenotípica da 2ª Lei de Mendel (9 : 3 : 3 : 1)")
+        mostrar(fig_m2, 360)
+
+    else:
+        st.markdown("### 🧬 Herança Quantitativa (Poligenia)")
+        st.markdown("""
+        Em características influenciadas por múltiplos pares de genes com efeito aditivo (ex: cor da pele, altura, teor de óleo em sementes):
+        Para **$N$ pares de alelos** em genitores heterozigotos ($AaBbCc... \\times AaBbCc...$), existem **$2N$ alelos aditivos**.
+        A quantidade de alelos aditivos segue exatamente a **linha $2N$ do Triângulo de Pascal**!
+        """)
+
+        cg1, cg2 = st.columns([1, 2.3])
+        with cg1:
+            n_pares = st.slider("Número de pares de alelos (N)", 1, 5, 2, key="pol_n")
+            tot_alelos = 2 * n_pares
+            st.info(f"**Pares de genes:** {n_pares} \n**Total de alelos aditivos:** {tot_alelos} \n**Linha do Triângulo de Pascal:** n = {tot_alelos}")
+            st.metric("Total de combinações de gametas", f"4^{n_pares} = {4**n_pares}")
+
+        with cg2:
+            ks_p = list(range(tot_alelos + 1))
+            comb_p = [nCr(tot_alelos, k) for k in ks_p]
+            pcts_p = [c / (2**tot_alelos) * 100 for c in comb_p]
+
+            fig_poli = go.Figure(go.Bar(
+                x=[f"{k} aditivos" for k in ks_p],
+                y=pcts_p,
+                text=[f"{c}/{2**tot_alelos}<br>({p:.1f}%)" for c, p in zip(comb_p, pcts_p)],
+                textposition="outside",
+                marker_color="#8b5cf6"
+            ))
+            fig_poli.update_layout(
+                title=f"Distribuição Fenotípica para Poligenia com {n_pares} Par(es) de Genes (Curva Normal)",
+                xaxis_title="Número de Alelos Aditivos",
+                yaxis_title="Frequência na Prole (%)"
+            )
+            mostrar(fig_poli, 400)
+
+    quiz("gen_q1", "Em um caso de herança quantitativa com 2 pares de genes (4 alelos no total), qual linha do Triângulo de Pascal define as proporções fenotípicas?",
+         ["Linha 2 (1, 2, 1)", "Linha 4 (1, 4, 6, 4, 1)", "Linha 8 (1, 8, 28...)", "Linha 16"], 1,
+         "Com 2 pares de genes heterozigotos (AaBb x AaBb), o total de alelos aditivos varia de 0 a 4. As proporções fenotípicas correspondem à linha 4 do Triângulo de Pascal: 1:4:6:4:1 (com um total de 16 combinações).")
+
 # RODAPÉ
 st.markdown("---")
 st.markdown('<div style="text-align:center;color:#94a3b8;font-size:.85rem;padding:1rem;">'
-    '🔺 <b>Triângulo de Pascal & Binômio de Newton Visual</b> — combinações · Stifel · Sierpinski · termo geral · distribuição binomial</div>',
+    '🔺 <b>Triângulo de Pascal & Binômio de Newton Visual</b> — combinações · Stifel · Sierpinski · termo geral · distribuição binomial · genética mendeliana</div>',
     unsafe_allow_html=True)
