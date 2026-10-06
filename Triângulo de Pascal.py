@@ -16,7 +16,6 @@ import math
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import streamlit as st
 
 # ────────────────────────────────────────────────────────────
@@ -574,12 +573,11 @@ with tabs[5]:
 
     elif modo_genetica.startswith("2."):
         st.markdown("### 🧬 2ª Lei de Mendel (Dihibridismo)")
-        st.markdown("""
-        No cruzamento $AaBb \\times AaBb$, a segregação de cada par de alelos é independente ($3:1$).
-        A combinação dos dois pares equivale ao quadrado do binômio fenotípico:
-
-        $$(3 \\text{ Dominante} + 1 \\text{ Recessivo})^2 = 9 \\text{ A_B_} + 3 \\text{ A_bb} + 3 \\text{ aaB_} + 1 \\text{ aabb}$$
-        """)
+        st.markdown(
+            "No cruzamento $AaBb \\times AaBb$, a segregação de cada par de alelos é independente ($3:1$).\n"
+            "A combinação dos dois pares equivale ao quadrado do binômio fenotípico:"
+        )
+        st.latex(r"(3\text{ Dominantes} + 1\text{ Recessivo})^2 = 9\text{ A\_B\_} + 3\text{ A\_bb} + 3\text{ aaB\_} + 1\text{ aabb}")
 
         df_mendel2 = pd.DataFrame({
             "Fenótipo": ["Dominante / Dominante (A_B_)", "Dominante / Recessivo (A_bb)", "Recessivo / Dominante (aaB_)", "Recessivo / Recessivo (aabb)"],
@@ -599,11 +597,11 @@ with tabs[5]:
 
     else:
         st.markdown("### 🧬 Herança Quantitativa (Poligenia)")
-        st.markdown("""
-        Em características influenciadas por múltiplos pares de genes com efeito aditivo (ex: cor da pele, altura, teor de óleo em sementes):
-        Para **$N$ pares de alelos** em genitores heterozigotos ($AaBbCc... \\times AaBbCc...$), existem **$2N$ alelos aditivos**.
-        A quantidade de alelos aditivos segue exatamente a **linha $2N$ do Triângulo de Pascal**!
-        """)
+        st.markdown(
+            "Em características influenciadas por múltiplos pares de genes com efeito aditivo (ex: cor da pele, altura, teor de óleo em sementes):\n\n"
+            "Para **$N$ pares de alelos** em genitores heterozigotos ($AaBbCc... \\times AaBbCc...$), existem **$2N$ alelos aditivos**.\n"
+            "A quantidade de alelos aditivos segue exatamente a **linha $2N$ do Triângulo de Pascal**!"
+        )
 
         cg1, cg2 = st.columns([1, 2.3])
         with cg1:
